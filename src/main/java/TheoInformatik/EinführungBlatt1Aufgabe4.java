@@ -1,4 +1,4 @@
-package Krypto;
+package TheoInformatik;
 
 public class EinführungBlatt1Aufgabe4 {
     public static void main(String[] args) {
