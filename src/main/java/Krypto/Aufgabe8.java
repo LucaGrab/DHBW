@@ -16,15 +16,62 @@ public class Aufgabe8 {
     static String bekanntesWort = "VERSCHLUESSELUNG";
 
     public static void main(String[] args) {
-        //System.out.println(Arrays.toString(getVerschiebung(0)));
-        //System.out.println(Arrays.toString(getChifIndex()));
-        /*for(int i = 1; i<20; i++){
-            ent(i);
-        }*/
-        ent(8);
+        for(int i = 1; i<150; i++){
+            vigEnt(i);
+        }
+        //vigEnt(8);
         //getDopplungen();
-        //System.out.println(chifText.indexOf("rfxwjr"));
-        //System.out.println(chifText.indexOf("rfxwjr",20));
+    }
+
+    public static void vigEnt(int sLänge){
+        int[] schlüsselBeimWort = new int[bekanntesWort.length()];
+        int[] chifIndex = new int[chifText.length()];
+        chifIndex = getChifIndex();
+        for(int i = 0; i<chifText.length()-bekanntesWort.length();i++){//Wort an jeder Stelle einsätzen - also der Anfang für den Schlüssel
+            schlüsselBeimWort = getVerschiebung(i);
+            String klarText = "";
+            char[] klarTextArray = new char[chifText.length()];
+            int schlüsselStartetBei = sLänge - i%sLänge;
+            for(int j = 0; j<chifText.length();j++){
+                if(schlüsselBeimWort.length>(j+schlüsselStartetBei) % sLänge) {
+                    klarText += alphabet.charAt((chifIndex[j] - schlüsselBeimWort[(j+schlüsselStartetBei) % sLänge] + 27) % 27);
+                }else{
+                    klarText += chifText.toLowerCase().charAt(j);
+                }
+            }
+            if(klarText.contains("VERSCHLUE")&&klarText.contains("UNVERSTAENDLICH")){
+                System.out.println("KlarWort an Stelle "+i+" eingesetzt. Schlüssel Länge ist "+ sLänge + ". Klartext: "+ klarText);
+            }
+        }
+    }
+
+    public static int[] getVerschiebung(int stelle){
+        int[] indexToReturn = new int[bekanntesWort.length()];
+        for(int i = 0; i<bekanntesWort.length(); i++){
+            for(int j = 0; j<alphabet.length();j++){
+                if(chifText.toUpperCase().charAt(i+stelle)==alphabet.charAt(j)) {
+                    indexToReturn[i] = j;
+                }
+            }
+            for(int k = 0; k<alphabet.length();k++){
+                if(bekanntesWort.toUpperCase().charAt(i)==alphabet.charAt(k)){
+                    indexToReturn[i] = (indexToReturn[i] - k+27)%27;
+                }
+            }
+        }
+        return indexToReturn;
+    }
+
+    public static int[] getChifIndex(){
+        int[] indexToReturn = new int[chifText.length()];
+        for(int i = 0; i<chifText.length(); i++){
+            for(int j = 0; j<alphabet.length(); j++){
+                if(chifText.toUpperCase().charAt(i)==alphabet.charAt(j)){
+                    indexToReturn[i] = j;
+                }
+            }
+        }
+        return indexToReturn;
     }
     public static void getDopplungen(){
         for(int i = 0; i<chifText.length()-5;i++){
@@ -40,14 +87,13 @@ public class Aufgabe8 {
         }
     }
 
-    public static void ent(int sLänge){
-        int[] schlüsselBeimWort = new int[bekanntesWort.length()];
+    public static void vigEntOldVersion(int sLänge){
+        int[] schlüsselBeimWort =  new int[bekanntesWort.length()];
         int[] chifIndex = new int[chifText.length()];
 
         chifIndex = getChifIndex();
         for(int i = 0; i<chifText.length()-bekanntesWort.length();i++){//Wort an jeder Stelle einsätzen - also der Anfang für den Schlüssel
             schlüsselBeimWort = getVerschiebung(i);
-            //if(i<2) System.out.println(Arrays.toString(schlüsselBeimWort));
             String klarText = "";
             char[] klarTextArray = new char[chifText.length()];
             boolean wiederAmAnfang = false;
@@ -55,27 +101,12 @@ public class Aufgabe8 {
                 int currentPosition = (j+i)%chifText.length();
                 if(currentPosition==0) wiederAmAnfang = true;
                 if((schlüsselBeimWort.length>j%sLänge)&&!wiederAmAnfang) {
-                    if (i == 131 && (currentPosition > 205 || currentPosition < 5)) {
-                        //System.out.println(j%sLänge);
-                        /*System.out.println("j%sLänge: " + j % sLänge);
-                        System.out.println("position: " + currentPosition);
-                        System.out.println("chifIndex: " + chifIndex[currentPosition]);
-                        System.out.println("chifBuchstabe: " + alphabet.charAt(chifIndex[currentPosition]));
-                        System.out.println("schlüssel: " + (schlüsselBeimWort[j % sLänge]));
-                        System.out.println("buchstaben index:" + (chifIndex[currentPosition] - schlüsselBeimWort[j % sLänge] + 27) % 27);
-                        System.out.println("richtiger buchstabe: " + alphabet.charAt((chifIndex[currentPosition] - schlüsselBeimWort[j % sLänge] + 27) % 27));*/
-                    }
                     klarTextArray[currentPosition] = alphabet.charAt((chifIndex[currentPosition] - schlüsselBeimWort[j % sLänge] + 27) % 27);
                     klarText += alphabet.charAt((chifIndex[currentPosition] - schlüsselBeimWort[j % sLänge] + 27) % 27);
 
-
                 }else if((schlüsselBeimWort.length>j%sLänge)&&wiederAmAnfang){
-                    if (i == 131 && (currentPosition > 205 || currentPosition < 15)) {
-                        //System.out.println(currentPosition%sLänge);
-                    }
                     klarTextArray[currentPosition] = alphabet.charAt((chifIndex[currentPosition] - schlüsselBeimWort[(currentPosition+5) % sLänge] + 27) % 27);
                     klarText += alphabet.charAt((chifIndex[currentPosition] - schlüsselBeimWort[(currentPosition+5) % sLänge] + 27) % 27);
-
 
                 }else if(schlüsselBeimWort.length<=j%sLänge){
                     klarTextArray[currentPosition] = chifText.toLowerCase().charAt(currentPosition);
@@ -84,70 +115,12 @@ public class Aufgabe8 {
             }
 
             if(klarText.contains("VERSCHLUE")&&klarText.contains("EINE")){
-                    System.out.println("KlarWort an Stelle: "+i+"sLänge: "+ sLänge + "text: "+ klarText);
-                    for(int c = 0; c<klarTextArray.length; c++){
-                        System.out.print(klarTextArray[c]);
-                    }
-            }
-        }
-    }
-
-    public static int[] getVerschiebung(int stelle){
-        int[] indexToReturn = new int[bekanntesWort.length()];
-        for(int i = 0; i<bekanntesWort.length(); i++){
-            for(int j = 0; j<alphabet.length();j++){
-                if(chifText.toUpperCase().charAt(i+stelle)==alphabet.charAt(j)) {
-                    indexToReturn[i] = j;
-                    /*if(i==0){
-                        System.out.println("i+stelle: "+ (i+stelle));
-                        System.out.println("im chif text: "+ chifText.toUpperCase().charAt(i+stelle));
-                        System.out.println("an stelle 9 hier: " + j);
-                    }*/
-                }
-            }
-            for(int k = 0; k<alphabet.length();k++){
-                if(bekanntesWort.toUpperCase().charAt(i)==alphabet.charAt(k)){
-                    indexToReturn[i] = (indexToReturn[i] - k+27)%27;
-                    /*if(i==0){
-                        System.out.println("k: "+ (k));
-                        System.out.println("im wort: "+ bekanntesWort.toUpperCase().charAt(i));
-                        System.out.println("schlüssel: " + indexToReturn[i]);
-                    }*/
+                System.out.println("KlarWort an Stelle: "+i+"sLänge: "+ sLänge + "text: "+ klarText);
+                for(int c = 0; c<klarTextArray.length; c++){
+                    System.out.print(klarTextArray[c]);
                 }
             }
         }
-        boolean firstDoppelt = false;
-        boolean secondDoppelt = false;
-        boolean thridDoppelt = false;
-
-
-        /*for(int b = 3; b<indexToReturn.length;b++){
-            if(indexToReturn[0]==indexToReturn[b]){
-                firstDoppelt = true;
-            }
-            if(indexToReturn[1]==indexToReturn[b]){
-                secondDoppelt = true;
-            }
-            if(indexToReturn[2]==indexToReturn[b]){
-                thridDoppelt = true;
-            }
-        }
-        if(firstDoppelt&&secondDoppelt&&thridDoppelt)System.out.println(Arrays.toString(indexToReturn));*/
-
-        //System.out.println(Arrays.toString(indexToReturn));
-        return indexToReturn;
-    }
-
-    public static int[] getChifIndex(){
-        int[] indexToReturn = new int[chifText.length()];
-        for(int i = 0; i<chifText.length(); i++){
-            for(int j = 0; j<alphabet.length(); j++){
-                if(chifText.toUpperCase().charAt(i)==alphabet.charAt(j)){
-                    indexToReturn[i] = j;
-                }
-            }
-        }
-        return indexToReturn;
     }
 
 
