@@ -13,13 +13,13 @@ public class Aufgabe8 {
     static String chifText = "wtlfpqktzbgdxwjswcrfxwjrlcyladajwhraeszqvlqakhawsspfccozepyoqfrh.nfupxxlwbquqhxuctaipbdqdlaiuqjkdkgighxq.yfbawjplktfgeohyplaxhsijdywuubtzwsfhvoblyeaeszqwtlfpyohjnfmjhbiwwrfpqktzbgdxwjswcrfxwjrlcyeupjtztdgghcvodyqes";
     static String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ.";
     //static String bekanntesWort = "KRYPTOGRAFIE";
-    static String bekanntesWort = "VERSCHLUESSELUNG";
+    static String bekanntesWort = "SCHLUESSE";
 
     public static void main(String[] args) {
-        for(int i = 1; i<150; i++){
+        /*for(int i = 1; i<150; i++){
             vigEnt(i);
-        }
-        //vigEnt(8);
+        }*/
+        vigEnt(8);
         //getDopplungen();
     }
 
@@ -39,7 +39,7 @@ public class Aufgabe8 {
                     klarText += chifText.toLowerCase().charAt(j);
                 }
             }
-            if(klarText.contains("VERSCHLUE")&&klarText.contains("UNVERSTAENDLICH")){
+            if(klarText.contains("VERSCHLUESSE")){
                 System.out.println("KlarWort an Stelle "+i+" eingesetzt. Schlüssel Länge ist "+ sLänge + ". Klartext: "+ klarText);
             }
         }
