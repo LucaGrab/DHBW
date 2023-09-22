@@ -3,18 +3,15 @@ import time
 import json
 import pandas as pd
 
-# Funktion zum Senden einer REST-Anfrage
 def send_rest_request():
     print("Sende Anfrage...")
     response = requests.get("https://platform.tier-services.io/v2/vehicle?zoneId=LEIPZIG",
                             headers={"X-API-Key": "bpEUTJEBTf74oGRWxaIcW7aeZMzDDODe1yBoSxi2"})
     return response
 
-# Anzahl der Anfragen und Zeitversatz in Sekunden zwischen den Anfragen
 anzahl_anfragen = 3
-zeitversatz = 10  # 2 Minuten
+zeitversatz = 10 
 
-# Daten in JSON-Dateien speichern
 for i in range(anzahl_anfragen):
     response = send_rest_request()
     
@@ -26,14 +23,13 @@ for i in range(anzahl_anfragen):
         print(f"Daten erfolgreich in {filename} gespeichert.")
         with open(filename, "r") as file:
             dataFromJson = json.load(file)
-            dataframe = pd.json_normalize(dataFromJson)
+            dataframe = pd.json_normalize(data, record_path=["data"])
             csv_filename = f"leipzig_data_{i + 1}.csv"
             dataframe.to_csv(csv_filename, index=False)
             print(f"Daten erfolgreich als {csv_filename} gespeichert.")
     else:
         print(f"Fehler beim Abrufen der Daten (Statuscode: {response.status_code}).")
 
-    # Zeitversatz zwischen den Anfragen
     if i < anzahl_anfragen - 1:
         print(f"Warte {zeitversatz} Sekunden bis zur nächsten Anfrage...")
         time.sleep(zeitversatz)
