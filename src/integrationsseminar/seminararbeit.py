@@ -8,6 +8,10 @@ import plotly.express as px
 from sklearn.cluster import KMeans
 from sklearn.cluster import DBSCAN
 import numpy as np
+from plotly import io
+from mpl_toolkits.basemap import Basemap
+
+
 
 def send_rest_request():
     print("Sende Anfrage...")
@@ -293,6 +297,67 @@ def plot_animated_map(restructured_df, title):
                      range_color=[0, max(restructured_df['Zugehörigkeit'])], category_orders={'Zugehörigkeit': sorted(set(restructured_df['Zugehörigkeit']))})
     fig.show()
 
+def allTimeDataPlotly():
+    # Laden der Daten aus der CSV-Datei
+    data = pd.read_csv("leipzig_data_sa_alltime.csv")
+
+    # Annahme: Die Daten enthalten Spalten 'id' und 'currentRangeMeters' für die Scooter und die Strecke
+    # Berechnung der Streckenveränderung für jeden Scooter
+    data['distance_change'] = data.groupby('id')['attributes.currentRangeMeters'].diff()
+
+    # Entfernen Sie NaN-Werte (erste Einträge für jeden Scooter haben keine vorherige Streckeninformation)
+    data.dropna(subset=['distance_change'], inplace=True)
+
+    # Wählen Sie die Top-Scooter basierend auf der Streckenveränderung aus
+    top_scooter_ids = data.groupby('id')['distance_change'].sum().abs().nlargest(5).index
+
+    # Daten für die ausgewählten Scooter auswählen
+    top_scooter_data = data[data['id'].isin(top_scooter_ids)]
+
+
+    # Ermitteln der fünf Scooter mit den meisten Einträgen
+    #top_scooter_ids = data['id'].value_counts().index[:1]
+
+    # Daten für die fünf Scooter auswählen
+    #top_scooter_data = data[data['id'].isin(top_scooter_ids)]
+    print(top_scooter_data['attributes.currentRangeMeters'])
+    # Plot mit Plotly
+    fig = px.scatter_mapbox(top_scooter_data, lat="attributes.lat", lon="attributes.lng", color="id", hover_name="attributes.currentRangeMeters",
+                            zoom=13, mapbox_style="carto-positron")
+    fig.show()
+
+def allTimeData():
+    # Laden der Daten aus der CSV-Datei
+    data = pd.read_csv("leipzig_data_sa_alltime.csv")
+
+    # Ermitteln der fünf Scooter mit den meisten Einträgen
+    top_scooter_ids = data['id'].value_counts().index[:1]
+
+    # Farben für die Scooter definieren
+    colors = ['red', 'blue', 'green', 'orange', 'purple']
+
+    # Initialisieren des Plots
+    plt.figure(figsize=(10, 8))
+
+    # Iteration über die fünf Scooter mit den meisten Einträgen
+    for i, scooter_id in enumerate(top_scooter_ids):
+        # Daten für den aktuellen Scooter auswählen
+        scooter_data = data[data['id'] == scooter_id]
+        print(scooter_data['attributes.lng'])
+        # Plot der Streckenbewegung des Scooters
+        plt.plot(scooter_data['attributes.lng'], scooter_data['attributes.lat'], marker='o', linestyle='-', color=colors[i], label=f'Scooter {i+1}')
+
+    # Beschriftung und Legende hinzufügen
+    plt.xlabel('Longitude')
+    plt.ylabel('Latitude')
+    plt.title('Streckenbewegung der fünf Scooter mit den meisten Einträgen')
+    plt.legend()
+
+    # Anzeigen der Karte
+    plt.grid(True)
+    plt.show()
+
+
 # Funktion zum Abrufen von Daten und Ausführen der Visualisierungen
 def visualize_scooter_data():
     response = send_rest_request()
@@ -307,17 +372,39 @@ def visualize_scooter_data():
         with open(filename, "r") as file:
             dataFromJson = json.load(file)
             dataframe = pd.json_normalize(data, record_path=["data"])
+            new_data_df = dataframe
             csv_filename = f"leipzig_data_sa.csv"
             dataframe.to_csv(csv_filename, index=False)
             print(f"Daten erfolgreich als {csv_filename} gespeichert.")
 
+                    # Laden der vorhandenen Daten, wenn die Datei existiert
+            try:
+                existing_data_df = pd.read_csv("leipzig_data_sa_alltime.csv")
+            except FileNotFoundError:
+                existing_data_df = pd.DataFrame()
+
+            # Filtern der neuen Daten, um nur diejenigen hinzuzufügen, die nicht bereits vorhanden sind
+            if not existing_data_df.empty:
+                existing_ids_last_update = existing_data_df[['id', 'attributes.lastLocationUpdate']]
+                new_data_df = new_data_df.merge(existing_ids_last_update, on=['id', 'attributes.lastLocationUpdate'], how='left', indicator=True)
+                new_data_df = new_data_df[new_data_df['_merge'] == 'left_only'].drop(columns=['_merge'])
+
+            # Hinzufügen der neuen Daten zu den vorhandenen Daten
+            combined_data_df = pd.concat([existing_data_df, new_data_df], ignore_index=True)
+
+            # Speichern der kombinierten Daten in der CSV-Datei
+            combined_data_df.to_csv("leipzig_data_sa_alltime.csv", index=False)
+            print("Daten erfolgreich gespeichert.")
+
+
+            allTimeDataPlotly()
             # Aufruf der Visualisierungsfunktionen
             #clusters_kmeans, cluster_centers_kmeans = cluster_points_kmeans(dataframe, 20)
             #plot_cluster_centers(dataframe, clusters_kmeans, cluster_centers_kmeans)
             #plot_cluster_centers_with_interactivity(dataframe, clusters_kmeans, cluster_centers_kmeans)
             #cluster_and_plot(dataframe,20)
-            restructured_df = kMeansAnimation(dataframe, 10)
-            plot_animated_map(restructured_df, title="Clustered Points on Map")
+            #restructured_df = kMeansAnimation(dataframe, 10)
+            #plot_animated_map(restructured_df, title="Clustered Points on Map")
             #plot_battery_histogram(dataframe)
             #plot_range_boxplot(dataframe)
             #plot_speed_histogram(dataframe)
