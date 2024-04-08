@@ -308,8 +308,17 @@ def allTimeDataPlotly():
     # Entfernen Sie NaN-Werte (erste Einträge für jeden Scooter haben keine vorherige Streckeninformation)
     data.dropna(subset=['distance_change'], inplace=True)
 
+    # Auswahl der Scooter basierend auf der Bedingung zwischen 5 und 10 Einträgen
+    counts = data['id'].value_counts()
+    selected_scooter_ids = counts[(counts >= 5) & (counts <= 10)].index
+
     # Wählen Sie die Top-Scooter basierend auf der Streckenveränderung aus
-    top_scooter_ids = data.groupby('id')['distance_change'].sum().abs().nlargest(5).index
+    top_scooter_ids = data[data['id'].isin(selected_scooter_ids)].groupby('id')['distance_change'].sum().abs().nlargest(5).index
+
+
+    # Wählen Sie die Top-Scooter basierend auf der Streckenveränderung aus
+    #top_scooter_ids = data.groupby('id')['distance_change'].sum().abs().nlargest(5).index
+    #top_scooter_ids = data['id'].value_counts().index[:1]
 
     # Daten für die ausgewählten Scooter auswählen
     top_scooter_data = data[data['id'].isin(top_scooter_ids)]
@@ -324,6 +333,8 @@ def allTimeDataPlotly():
     # Plot mit Plotly
     fig = px.scatter_mapbox(top_scooter_data, lat="attributes.lat", lon="attributes.lng", color="id", hover_name="attributes.currentRangeMeters",
                             zoom=13, mapbox_style="carto-positron")
+    fig.update_traces(mode='lines+markers', line=dict(width=2))
+
     fig.show()
 
 def allTimeData():
