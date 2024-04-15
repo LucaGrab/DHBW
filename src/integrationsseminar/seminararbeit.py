@@ -1,6 +1,8 @@
 import requests
 import pandas as pd
 import json
+from IPython.display import display
+from tabulate import tabulate
 
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
@@ -12,6 +14,7 @@ from mpl_toolkits.basemap import Basemap
 from dash import Dash, dcc, html
 import chart_studio
 import chart_studio.plotly as py
+chart_studio.tools.set_credentials_file(username='LucaGrabowski', api_key='')
 
 
 
@@ -21,9 +24,48 @@ def send_rest_request():
                             headers={"X-API-Key": "bpEUTJEBTf74oGRWxaIcW7aeZMzDDODe1yBoSxi2"})
     return response
 
+def basicPlot(dataframe):
+    plt.scatter(dataframe['attributes.batteryLevel'],dataframe['attributes.currentRangeMeters'])
+    plt.xlabel('Batterieladestand (%)')
+    plt.ylabel('Aktuelle Reichweite (m)')
+    plt.title('Abhängigkeit zwischen Reichweite und Batterieladestand')
+    plt.show()
+
+def basicSubPlot(dataframe):
+    plt.subplot(1,2,1)
+    plt.scatter(dataframe['attributes.batteryLevel'],dataframe['attributes.currentRangeMeters'])
+    plt.title('Abhängigkeit zwischen Reichweite und Batterieladestand')
+    plt.subplot(1,2,2)
+    plt.hist(dataframe['attributes.batteryLevel'])
+    plt.title('Verteilung des Batterieladestands der E-Scooter')
+    plt.suptitle('E-Scooter Grafiken')
+    plt.show()
+
+def basicExplSubPlot(dataframe):
+    #Explizite Aufrufe – Objekt orientiert
+    fig = plt.figure()
+    axes = fig.subplots(1,2)
+    (ax1,ax2) = axes
+    ax1.scatter(dataframe['attributes.batteryLevel'],dataframe['attributes.currentRangeMeters'])
+    ax2.set_title('Verteilung des Batterieladestands der E-Scooter')
+    ax1.set_title('Abhängigkeit zwischen Reichweite und Batterieladestand')
+    ax2.hist(dataframe['attributes.batteryLevel'])
+    plt.show()
+
+def basicPlotExpress(dataframe):
+    fig = px.scatter(dataframe, x='attributes.batteryLevel', y='attributes.currentRangeMeters',
+                     title='Abhängigkeit zwischen Reichweite und Batterieladestand')
+    print(fig)
+    fig.show()
+def basicPlotGO(dataframe):
+    fig = go.Figure(data=go.Scatter(x=dataframe['attributes.batteryLevel'],
+                                     y=dataframe['attributes.currentRangeMeters'],
+                                     mode='markers'))
+    fig.update_layout(title='Abhängigkeit zwischen Reichweite und Batterieladestand')
+    print(fig)
+    fig.show()
 def plot_battery_histogram(dataframe):
-    plt.figure(figsize=(10, 6))
-    plt.hist(dataframe['attributes.batteryLevel'], bins=20)
+    plt.hist(dataframe['attributes.batteryLevel'])
     plt.xlabel('Batterieladestand (%)')
     plt.ylabel('Anzahl der E-Scooter')
     plt.title('Verteilung des Batterieladestands der E-Scooter')
@@ -37,7 +79,6 @@ def plot_range_boxplot(dataframe): #min, max, median, unter und obere Quartil
     plt.show()
 
 def plot_map_with_marker_colors(dataframe):#geht
-    chart_studio.tools.set_credentials_file(username='LucaGrabowski', api_key='')
     fig = go.Figure(go.Scattermapbox(
             lat=dataframe['attributes.lat'],
             lon=dataframe['attributes.lng'],
@@ -57,9 +98,9 @@ def plot_map_with_marker_colors(dataframe):#geht
         mapbox_center = {"lat": dataframe['attributes.lat'].mean(), "lon": dataframe['attributes.lng'].mean()}
     )
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-    #fig.show()
-    py.plot(fig, filename = 'test', auto_open=True)
-    '''   
+    fig.show()
+    #py.plot(fig, filename = 'test', auto_open=True)
+    '''
     app = Dash()
     app.layout = html.Div([
         html.H1(children='Title of Dash App', style={'textAlign':'center'}),
@@ -67,7 +108,13 @@ def plot_map_with_marker_colors(dataframe):#geht
         dcc.Graph(figure=fig)
     ])
     app.run_server(debug=True, use_reloader=False)
-'''
+    '''
+
+def plot_3d_scatterplot(dataframe, title): #komisch verteilt
+    fig = px.scatter_3d(dataframe, x='attributes.lng', y='attributes.lat', z='attributes.batteryLevel',
+                        color='attributes.currentRangeMeters', opacity=0.7, title=title)
+    fig.show()
+    
 def cluster_points_kmeans(dataframe, num_clusters):
     # Datenpunkte für das K-Means-Clustering vorbereiten
     X = dataframe[['attributes.lat', 'attributes.lng']].values
@@ -264,6 +311,7 @@ def allTimeDataPlotly():
 
     fig.show()
 
+
 # Funktion zum Abrufen von Daten und Ausführen der Visualisierungen
 def visualize_scooter_data():
     response = send_rest_request()
@@ -278,6 +326,10 @@ def visualize_scooter_data():
         with open(filename, "r") as file:
             dataFromJson = json.load(file)
             dataframe = pd.json_normalize(data, record_path=["data"])
+            spaltennamen = dataframe.columns
+            spalte_array = dataframe['id'].values
+            print(spalte_array)
+            #print(tabulate(dataframe.head(), tablefmt = 'psql'))
             new_data_df = dataframe
             csv_filename = f"leipzig_data_sa.csv"
             dataframe.to_csv(csv_filename, index=False)
@@ -303,29 +355,35 @@ def visualize_scooter_data():
 
             #-----------pyplot----------
             #plot_battery_histogram(dataframe)
+            #basicPlot(dataframe)
+            #basicSubPlot(dataframe)
+            #basicExplSubPlot(dataframe)
+            #basicPlotGO(dataframe)
             #plot_range_boxplot(dataframe)
 
             #-----------plotly------------
-            #mit oder ohne dash
-            plot_map_with_marker_colors(dataframe) #zeigt map mit batteriezustand an
+            #plot_3d_scatterplot(dataframe, title='3D-Scatterplot der E-Scooter-Standorte')
 
             #clusters_kmeans, cluster_centers_kmeans = cluster_points_kmeans(dataframe, 20)
             #plot_cluster_centers(dataframe, clusters_kmeans, cluster_centers_kmeans) #zeigt cluster zentrent
             #cluster_and_plot(dataframe,20) #zeigt punkte mit cluster farben
-            #plot_cluster_centers_with_interactivity(dataframe, clusters_kmeans, cluster_centers_kmeans)#zeigt zentrent und die punkte
 
             #restructured_df = kMeansAnimation(dataframe, 10)
             #plot_animated_map2(restructured_df, title="Clustered Points on Map") #Animation nach Clusteranzahl
 
+            #mit oder ohne dash
+            #plot_map_with_marker_colors(dataframe) #zeigt map mit batteriezustand an
+
+
+
+            #-------zu viel
+            #plot_cluster_centers_with_interactivity(dataframe, clusters_kmeans, cluster_centers_kmeans)#zeigt zentrent und die punkte
             #plot_animated_map(dataframe, title='Animierte Karte der E-Scooter-Bewegungen im Zeitverlauf') #unterschiedliche scooter animiert
-            #allTimeDataPlotly()
-
-
+            allTimeDataPlotly()
 
 
             #------geht nur halb------
             #plot_heatmap(dataframe, title='Heatmap der Batterieladestände in verschiedenen Zonen') #geht aber aussage idk
-            #plot_3d_scatterplot(dataframe, title='3D-Scatterplot der E-Scooter-Standorte') #komisch verteilt
 
             #------nicht zeigen------
             #plot_speed_histogram(dataframe) #nö
@@ -393,10 +451,7 @@ def plot_zone_bar_chart(dataframe): #das nicht
     plt.show()
 
 
-def plot_3d_scatterplot(dataframe, title): #komisch verteilt
-    fig = px.scatter_3d(dataframe, x='attributes.lng', y='attributes.lat', z='attributes.batteryLevel',
-                        color='attributes.batteryLevel', opacity=0.7, title=title)
-    fig.show()
+
 
 def plot_pie_chart(dataframe, labels_column, values_column, title): #geht nicht
     fig = px.pie(dataframe, values=values_column, names=labels_column, title=title)
